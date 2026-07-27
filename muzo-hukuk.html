@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muzo Hukuk - 3. Sınıf</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <!-- React & Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #1C2B4A;
+      font-family: 'IBM Plex Sans', sans-serif;
+      color: #2A2622;
+    }
+    
+    /* Top Arch Hero Section */
+    .hero-wrapper {
+      background-color: #1C2B4A;
+      background-image: radial-gradient(#2A3E66 1px, transparent 1px);
+      background-size: 16px 16px;
+      padding: 20px 16px 10px;
+    }
+
+    .arch-card {
+      background: #F6F1E4;
+      border: 2px solid #B8923F;
+      border-radius: 140px 140px 20px 20px;
+      padding: 28px 18px 20px;
+      text-align: center;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    }
+
+    /* Section Header with Line */
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      color: #B8923F;
+      margin: 20px 0 12px;
+    }
+    .section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: rgba(217, 207, 184, 0.3);
+    }
+
+    /* Main Content Container */
+    .content-container {
+      background: #F6F1E4;
+      min-height: 80vh;
+      border-top-left-radius: 24px;
+      border-top-right-radius: 24px;
+      padding: 20px;
+      margin-top: 10px;
+    }
+
+    .app-card {
+      background: #ffffff;
+      border: 1px solid #D9CFB8;
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: 0 4px 12px rgba(28,43,74,0.04);
+      margin-bottom: 12px;
+    }
+
+    button { font-family: inherit; cursor: pointer; }
+    input, textarea { font-family: inherit; }
+    ::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo, useCallback } = React;
+
+    const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+    const storageAdapter = {
+      async get(key) {
+        try {
+          const val = localStorage.getItem(key);
+          return val ? { value: val } : null;
+        } catch (e) {
+          return null;
+        }
+      },
+      async set(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch (e) {}
+      },
+    };
+
+    const COURSES = [
+      "Vergi Hukuku",
+      "Ceza Hukuku (Özel Hükümler)",
+      "Borçlar Hukuku (Özel Hükümler)",
+      "Medeni Usul Hukuku",
+      "Ticaret Hukuku",
+      "İdari Yargılama Hukuku",
+      "Eşya Hukuku",
+    ];
+
+    const LAWS = [
+      {
+        code: "TMK",
+        title: "Türk Medeni Kanunu",
+        note: "4721 sayılı — kişiler, aile, miras ve eşya hukuku (1030 madde)",
+        url: "https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=4721&MevzuatTur=1&MevzuatTertip=5",
+      },
+      {
+        code: "TBK",
+        title: "Türk Borçlar Kanunu",
+        note: "6098 sayılı — borç ilişkileri, sözleşmeler, haksız fiil",
+        url: "https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=6098&MevzuatTur=1&MevzuatTertip=5",
+      },
+      {
+        code: "TCK",
+        title: "Türk Ceza Kanunu",
+        note: "5237 sayılı — suçlar, cezalar ve güvenlik tedbirleri",
+        url: "https://www.mevzuat.gov.tr/mevzuat?MevzuatNo=5237&MevzuatTur=1&MevzuatTertip=5",
+      },
+    ];
+
+    const SEED_CARDS = [
+      {
+        id: uid(),
+        topic: "Eşya Hukuku",
+        front: "Zilyetlik türleri nelerdir ve dolaysız zilyetlik ne anlama gelir?",
+        back: "Zilyetlik; asli-fer'i, dolaylı-dolaysız ve tek başına-birlikte zilyetlik olarak ayrılır. Fiili hakimiyeti doğrudan doğruya kullanan kişi dolaysız zilyettir (örneğin kiracı).",
+        level: 0,
+        lastReviewed: null,
+      },
+      {
+        id: uid(),
+        topic: "Borçlar Hukuku (Özel)",
+        front: "Satış sözleşmesinde satıcının ayıptan sorumluluğunun şartları nelerdir?",
+        back: "1. Malın ayıplı olması, 2. Ayıbın hasarın geçtiği anda var olması, 3. Alıcının ayıbı bilmemesi, 4. Alıcının muayene ve ihbar külfetini yerine getirmiş olması.",
+        level: 0,
+        lastReviewed: null,
+      },
+    ];
+
+    const SEED_CASES = [
+      {
+        id: uid(),
+        course: "Eşya Hukuku",
+        title: "Tapuda Çift Kayıt ve İyiniyetli Üçüncü Kişi",
+        factPattern: "(A), adına tapuda kayıtlı taşınmazı (B)'ye satmış fakat tescil yapılmamıştır. Yolsuz tescilden yararlanan (C) ise taşınmazı iyi niyetle (D)'ye devretmiştir.",
+        legalIssue: "(D)'nin iktisabı TMK m. 1023 kapsamında korunur mu?",
+        statute: "TMK m. 1023, TMK m. 1024",
+        solution: "TMK m. 1023 uyarınca tapu kütüğündeki tescile iyiniyetle dayanarak ayni hak kazanan üçüncü kişinin bu kazanımı korunur. (D) iyiniyetli olduğu için mülkiyeti kazanır.",
+      },
+    ];
+
+    const getDaysLeft = (targetDateStr) => {
+      const now = new Date();
+      const target = new Date(targetDateStr);
+      now.setHours(0, 0, 0, 0);
+      target.setHours(0, 0, 0, 0);
+      const diffTime = target - now;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return diffDays > 0 ? diffDays : 0;
+    };
+
+    function HukukFisleri() {
+      const [loading, setLoading] = useState(true);
+      const [cards, setCards] = useState([]);
+      const [resources, setResources] = useState({});
+      const [cases, setCases] = useState([]);
+      const [lawNotes, setLawNotes] = useState({});
+
+      const [tab, setTab] = useState("dersler");
+      const [selectedCourse, setSelectedCourse] = useState(null);
+      const [showResourceForm, setShowResourceForm] = useState(false);
+      const [resourceForm, setResourceForm] = useState({ title: "", url: "", note: "", category: "Genel" });
+
+      const [pdfFile, setPdfFile] = useState(null);
+      const [showPdfViewer, setShowPdfViewer] = useState(false);
+
+      const [selectedTopic, setSelectedTopic] = useState("Tümü");
+      const [queueIds, setQueueIds] = useState([]);
+      const [cursor, setCursor] = useState(0);
+      const [flipped, setFlipped] = useState(false);
+
+      const [lawSearch, setLawSearch] = useState("");
+      const [expandedLaw, setExpandedLaw] = useState(null);
+      const [noteDraft, setNoteDraft] = useState({ madde: "", text: "" });
+
+      const [showAddForm, setShowAddForm] = useState(false);
+      const [form, setForm] = useState({ topic: "", front: "", back: "" });
+
+      const [openCaseId, setOpenCaseId] = useState(null);
+      const [toast, setToast] = useState(null);
+
+      // Sınav Tarihleri Hesaplaması
+      const currentYear = new Date().getFullYear();
+      const vizeDateStr = `${currentYear}-12-28`;
+      const finalYear = new Date().getMonth() >= 6 ? currentYear + 1 : currentYear;
+      const finalDateStr = `${finalYear}-06-01`;
+
+      const vizeDays = useMemo(() => getDaysLeft(vizeDateStr), [vizeDateStr]);
+      const finalDays = useMemo(() => getDaysLeft(finalDateStr), [finalDateStr]);
+
+      const dailyTarget = 10;
+      const todayReviewedCount = useMemo(() => {
+        const todayStr = new Date().toISOString().split("T")[0];
+        return cards.filter(c => c.lastReviewed && c.lastReviewed.startsWith(todayStr)).length;
+      }, [cards]);
+
+      const showToast = (msg) => {
+        setToast(msg);
+        setTimeout(() => setToast(null), 3000);
+      };
+
+      useEffect(() => {
+        (async () => {
+          let loadedCards = SEED_CARDS;
+          let loadedResources = {};
+          let loadedCases = SEED_CASES;
+          let loadedLawNotes = {};
+
+          try {
+            const c = await storageAdapter.get("cards");
+            if (c && c.value) loadedCards = JSON.parse(c.value);
+          } catch (e) {}
+
+          try {
+            const r = await storageAdapter.get("resources");
+            if (r && r.value) loadedResources = JSON.parse(r.value);
+          } catch (e) {}
+
+          try {
+            const cs = await storageAdapter.get("cases");
+            if (cs && cs.value) loadedCases = JSON.parse(cs.value);
+          } catch (e) {}
+
+          try {
+            const ln = await storageAdapter.get("law-notes");
+            if (ln && ln.value) loadedLawNotes = JSON.parse(ln.value);
+          } catch (e) {}
+
+          setCards(loadedCards);
+          setResources(loadedResources);
+          setCases(loadedCases);
+          setLawNotes(loadedLawNotes);
+          setLoading(false);
+        })();
+      }, []);
+
+      const saveCards = useCallback(async (next) => {
+        setCards(next);
+        await storageAdapter.set("cards", JSON.stringify(next));
+      }, []);
+
+      const saveResources = useCallback(async (next) => {
+        setResources(next);
+        await storageAdapter.set("resources", JSON.stringify(next));
+      }, []);
+
+      const saveLawNotes = useCallback(async (next) => {
+        setLawNotes(next);
+        await storageAdapter.set("law-notes", JSON.stringify(next));
+      }, []);
+
+      const handlePdfUpload = (e) => {
+        const file = e.target.files[0];
+        if (file && file.type === "application/pdf") {
+          const fileUrl = URL.createObjectURL(file);
+          setPdfFile({ name: file.name, url: fileUrl });
+          setShowPdfViewer(true);
+          showToast(`${file.name} yüklendi.`);
+        } else {
+          showToast("Lütfen geçerli bir PDF dosyası seçin.");
+        }
+      };
+
+      const addResource = () => {
+        if (!resourceForm.title.trim()) {
+          showToast("Kaynak adı gerekli.");
+          return;
+        }
+        const list = resources[selectedCourse] || [];
+        const newRes = {
+          id: uid(),
+          title: resourceForm.title.trim(),
+          url: resourceForm.url.trim(),
+          note: resourceForm.note.trim(),
+          category: resourceForm.category || "Genel",
+        };
+        saveResources({ ...resources, [selectedCourse]: [...list, newRes] });
+        setResourceForm({ title: "", url: "", note: "", category: resourceForm.category });
+        setShowResourceForm(false);
+        showToast("Kaynak eklendi.");
+      };
+
+      const deleteResource = (course, id) => {
+        saveResources({ ...resources, [course]: (resources[course] || []).filter((r) => r.id !== id) });
+        showToast("Kaynak silindi.");
+      };
+
+      const addLawNote = (code) => {
+        if (!noteDraft.text.trim()) {
+          showToast("Not metni boş olamaz.");
+          return;
+        }
+        const list = lawNotes[code] || [];
+        const newNote = { id: uid(), madde: noteDraft.madde.trim(), text: noteDraft.text.trim(), date: new Date().toISOString() };
+        saveLawNotes({ ...lawNotes, [code]: [...list, newNote] });
+        setNoteDraft({ madde: "", text: "" });
+        showToast("Kanun notu kaydedildi.");
+      };
+
+      const deleteLawNote = (code, id) => {
+        saveLawNotes({ ...lawNotes, [code]: (lawNotes[code] || []).filter((n) => n.id !== id) });
+        showToast("Not silindi.");
+      };
+
+      const topics = useMemo(() => {
+        const set = new Set(cards.map((c) => c.topic));
+        return Array.from(set);
+      }, [cards]);
+
+      const topicStats = useMemo(() => {
+        return topics.map((t) => {
+          const tc = cards.filter((c) => c.topic === t);
+          const avg = tc.length ? tc.reduce((s, c) => s + c.level, 0) / (tc.length * 4) : 0;
+          return { topic: t, count: tc.length, mastery: Math.round(avg * 100) };
+        });
+      }, [cards, topics]);
+
+      useEffect(() => {
+        const pool = cards.filter((c) => selectedTopic === "Tümü" || c.topic === selectedTopic);
+        const sorted = [...pool].sort((a, b) => a.level - b.level || (a.lastReviewed || "").localeCompare(b.lastReviewed || ""));
+        setQueueIds(sorted.map((c) => c.id));
+        setCursor(0);
+        setFlipped(false);
+      }, [selectedTopic, tab, cards]);
+
+      const queue = queueIds.map((id) => cards.find((c) => c.id === id)).filter(Boolean);
+      const current = queue[cursor % Math.max(queue.length, 1)];
+
+      const rate = (delta) => {
+        if (!current) return;
+        const next = cards.map((c) =>
+          c.id === current.id
+            ? { ...c, level: Math.max(0, Math.min(4, c.level + delta)), lastReviewed: new Date().toISOString() }
+            : c
+        );
+        saveCards(next);
+        setFlipped(false);
+        setCursor((c) => c + 1);
+      };
+
+      const deleteCard = (id) => {
+        saveCards(cards.filter((c) => c.id !== id));
+        showToast("Fiş silindi.");
+      };
+
+      const addCard = () => {
+        if (!form.topic.trim() || !form.front.trim() || !form.back.trim()) {
+          showToast("Tüm alanları doldurmalısın.");
+          return;
+        }
+        const newCard = {
+          id: uid(),
+          topic: form.topic.trim(),
+          front: form.front.trim(),
+          back: form.back.trim(),
+          level: 0,
+          lastReviewed: null,
+        };
+        saveCards([...cards, newCard]);
+        setForm({ topic: form.topic, front: "", back: "" });
+        showToast("Yeni fiş eklendi!");
+      };
+
+      if (loading) return null;
+
+      const COLORS = {
+        ink: "#1C2B4A",
+        parchment: "#F6F1E4",
+        bordo: "#7C2D3B",
+        gold: "#B8923F",
+        charcoal: "#2A2622",
+        green: "#4C6B4F",
+        rust: "#A6432F",
+        line: "#D9CFB8",
+      };
+
+      return (
+        <div style={{ minHeight: "100vh", background: COLORS.ink, paddingBottom: 90 }}>
+
+          {/* Toast Notification */}
+          {toast && (
+            <div style={{
+              position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)",
+              background: COLORS.parchment, color: COLORS.ink, padding: "10px 18px", borderRadius: 20,
+              fontSize: 12.5, fontWeight: 600, zIndex: 1000, boxShadow: "0 4px 14px rgba(0,0,0,0.25)"
+            }}>
+              {toast}
+            </div>
+          )}
+
+          {/* Top Arch Hero Section (Meşk Style) */}
+          <div className="hero-wrapper">
+            <div className="arch-card">
+              <div style={{ fontSize: 24, color: COLORS.gold, marginBottom: 4 }}>⚖️</div>
+              <div style={{ fontFamily: "'Fraunces', serif", fontSize: 32, fontWeight: 700, color: COLORS.ink, letterSpacing: -0.5 }}>
+                Muzo Hukuk
+              </div>
+              <div style={{ fontSize: 12, color: COLORS.bordo, marginTop: 4, fontWeight: 500, lineHeight: 1.4 }}>
+                Hukuk 3. sınıf ders kaynakları &amp; sınav pratikleri
+              </div>
+
+              {/* Stats Line */}
+              <div style={{ display: "flex", justifyContent: "center", gap: 14, margin: "16px 0 14px", fontSize: 12.5, color: COLORS.charcoal }}>
+                <div><strong style={{ color: COLORS.bordo }}>{vizeDays}</strong> vizeye</div>
+                <div style={{ color: COLORS.line }}>•</div>
+                <div><strong style={{ color: COLORS.gold }}>{finalDays}</strong> finale</div>
+                <div style={{ color: COLORS.line }}>•</div>
+                <div><strong style={{ color: todayReviewedCount >= dailyTarget ? COLORS.green : COLORS.rust }}>{todayReviewedCount}/{dailyTarget}</strong> fiş</div>
+              </div>
+
+              {/* Pill Button (Meşk Style Dashed Border) */}
+              <button onClick={() => setTab("pratik")} style={{
+                background: "transparent", border: `1.5px dashed ${COLORS.gold}`, borderRadius: 999,
+                padding: "8px 18px", fontSize: 12, fontWeight: 600, color: COLORS.ink, display: "inline-flex", alignItems: "center", gap: 6
+              }}>
+                ⚖️ Günlük Pratiğe Başla
+              </button>
+            </div>
+          </div>
+
+          {/* Main Content Area */}
+          <div className="content-container">
+
+            {/* ---- DERSLER TAB ---- */}
+            {tab === "dersler" && !selectedCourse && (
+              <div>
+                <div className="section-title">DERSLERİM</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                  {COURSES.map((course) => {
+                    const count = (resources[course] || []).length;
+                    return (
+                      <button key={course} onClick={() => setSelectedCourse(course)} className="app-card" style={{
+                        position: "relative", aspectRatio: "1 / 1", display: "flex", flexDirection: "column",
+                        justify: "space-between", padding: "16px 14px", textAlign: "left", border: `1px solid ${COLORS.line}`
+                      }}>
+                        <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 5, background: COLORS.gold, borderRadius: "18px 18px 0 0" }} />
+                        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 15, fontWeight: 600, color: COLORS.ink, lineHeight: 1.3, marginTop: 8 }}>
+                          {course}
+                        </div>
+                        <div style={{ fontSize: 11, color: COLORS.bordo, fontWeight: 500 }}>
+                          {count > 0 ? `${count} kaynak` : "kaynak yok"}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {tab === "dersler" && selectedCourse && (
+              <div>
+                <button onClick={() => { setSelectedCourse(null); setShowResourceForm(false); setShowPdfViewer(false); }} style={{ background: "none", border: "none", color: COLORS.bordo, fontSize: 13, fontWeight: 600, marginBottom: 10, padding: 0 }}>
+                  ← Derslerim
+                </button>
+                <div style={{ fontFamily: "'Fraunces', serif", fontSize: 20, fontWeight: 600, color: COLORS.ink, marginBottom: 14 }}>
+                  {selectedCourse}
+                </div>
+
+                {/* PDF Viewer Card */}
+                <div className="app-card">
+                  <div style={{ fontWeight: 600, fontSize: 13, color: COLORS.ink, marginBottom: 6 }}>📄 Ders Notu PDF'i Yükle &amp; Oku</div>
+                  <label style={{
+                    display: "inline-block", padding: "8px 14px", borderRadius: 8, background: COLORS.ink, color: "#fff",
+                    fontSize: 12, fontWeight: 600, cursor: "pointer", marginBottom: pdfFile ? 10 : 0
+                  }}>
+                    PDF Seç
+                    <input type="file" accept="application/pdf" onChange={handlePdfUpload} style={{ display: "none" }} />
+                  </label>
+
+                  {pdfFile && (
+                    <div>
+                      <div style={{ fontSize: 12, color: COLORS.bordo, fontWeight: 500, marginBottom: 8 }}>Yüklü: {pdfFile.name}</div>
+                      <button onClick={() => setShowPdfViewer(!showPdfViewer)} style={{ padding: "6px 12px", borderRadius: 6, border: `1px solid ${COLORS.line}`, background: COLORS.parchment, fontSize: 12, fontWeight: 600 }}>
+                        {showPdfViewer ? "PDF Okuyucuyu Kapat" : "PDF Okuyucuda Aç"}
+                      </button>
+                    </div>
+                  )}
+
+                  {showPdfViewer && pdfFile && (
+                    <div style={{ marginTop: 12, borderTop: `1px solid ${COLORS.line}`, paddingTop: 10 }}>
+                      <iframe src={pdfFile.url} title="PDF Viewer" style={{ width: "100%", height: 380, border: "none", borderRadius: 8 }} />
+                    </div>
+                  )}
+                </div>
+
+                {(resources[selectedCourse] || []).length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "20px 10px", color: COLORS.bordo, opacity: 0.75 }}>
+                    <div style={{ fontSize: 13.5 }}>Henüz kaynak bağlantısı eklenmedi.</div>
+                  </div>
+                ) : (
+                  <div style={{ marginBottom: 18 }}>
+                    {["Vize", "Final", "Genel"].map((cat) => {
+                      const list = (resources[selectedCourse] || []).filter((r) => (r.category || "Genel") === cat);
+                      if (list.length === 0) return null;
+                      return (
+                        <div key={cat} style={{ marginBottom: 14 }}>
+                          <div className="section-title">{cat.toUpperCase()}</div>
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {list.map((r) => (
+                              <div key={r.id} className="app-card" style={{ marginBottom: 0 }}>
+                                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                  <div style={{ fontWeight: 600, fontSize: 13.5, color: COLORS.ink }}>{r.title}</div>
+                                  <button onClick={() => deleteResource(selectedCourse, r.id)} style={{ background: "none", border: "none", fontSize: 11, color: COLORS.bordo, opacity: 0.5, marginLeft: 8 }}>sil</button>
+                                </div>
+                                {r.url && <a href={r.url} target="_blank" rel="noreferrer" style={{ fontSize: 12, color: COLORS.bordo, wordBreak: "break-all", display: "block", marginTop: 4 }}>{r.url}</a>}
+                                {r.note && <div style={{ fontSize: 12.5, color: COLORS.charcoal, opacity: 0.75, marginTop: 4 }}>{r.note}</div>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {!showResourceForm ? (
+                  <button onClick={() => setShowResourceForm(true)} style={{ width: "100%", padding: "13px 0", borderRadius: 12, border: `1px dashed ${COLORS.bordo}`, background: "transparent", color: COLORS.bordo, fontWeight: 600, fontSize: 13.5 }}>
+                    + Bağlantı / Not Ekle
+                  </button>
+                ) : (
+                  <div className="app-card">
+                    <div style={{ fontWeight: 600, fontSize: 13.5, color: COLORS.ink, marginBottom: 10 }}>Yeni Kaynak</div>
+                    <div style={{ display: "flex", gap: 6, marginBottom: 8 }}>
+                      {["Vize", "Final", "Genel"].map((cat) => (
+                        <button key={cat} onClick={() => setResourceForm({ ...resourceForm, category: cat })} style={{
+                          flex: 1, padding: "8px 0", borderRadius: 6, fontSize: 12.5, fontWeight: 600,
+                          border: `1px solid ${resourceForm.category === cat ? COLORS.bordo : COLORS.line}`,
+                          background: resourceForm.category === cat ? COLORS.bordo : "transparent",
+                          color: resourceForm.category === cat ? "#fff" : COLORS.charcoal,
+                        }}>{cat}</button>
+                      ))}
+                    </div>
+                    <input placeholder="Kaynak adı (örn. Slayt, Önemli Makale)" value={resourceForm.title} onChange={(e) => setResourceForm({ ...resourceForm, title: e.target.value })} style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: `1px solid ${COLORS.line}`, marginBottom: 8, fontSize: 13.5 }} />
+                    <input placeholder="Bağlantı (Drive vs.)" value={resourceForm.url} onChange={(e) => setResourceForm({ ...resourceForm, url: e.target.value })} style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: `1px solid ${COLORS.line}`, marginBottom: 8, fontSize: 13.5 }} />
+                    <textarea placeholder="Not (opsiyonel)" value={resourceForm.note} onChange={(e) => setResourceForm({ ...resourceForm, note: e.target.value })} style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: `1px solid ${COLORS.line}`, marginBottom: 12, fontSize: 13.5, minHeight: 50, resize: "vertical" }} />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={addResource} style={{ flex: 1, padding: "11px 0", borderRadius: 6, border: "none", background: COLORS.ink, color: "#fff", fontWeight: 600, fontSize: 13.5 }}>Kaydet</button>
+                      <button onClick={() => setShowResourceForm(false)} style={{ flex: 1, padding: "11px 0", borderRadius: 6, border: `1px solid ${COLORS.line}`, background: "transparent", color: COLORS.charcoal, fontSize: 13.5 }}>Kapat</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ---- KANUNLAR TAB ---- */}
+            {tab === "kanunlar" && (
+              <div>
+                <div className="section-title">KANUNLAR &amp; MEVZUAT</div>
+                <input
+                  placeholder="Kanunlarda veya notlarında ara..."
+                  value={lawSearch}
+                  onChange={(e) => setLawSearch(e.target.value)}
+                  style={{ width: "100%", padding: "11px 14px", borderRadius: 12, border: `1px solid ${COLORS.line}`, marginBottom: 14, fontSize: 13, background: "#fff" }}
+                />
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {LAWS.filter(l => l.title.toLowerCase().includes(lawSearch.toLowerCase()) || l.code.toLowerCase().includes(lawSearch.toLowerCase())).map((law) => {
+                    const notes = lawNotes[law.code] || [];
+                    const open = expandedLaw === law.code;
+                    return (
+                      <div key={law.code} className="app-card" style={{ padding: 0, overflow: "hidden" }}>
+                        <a href={law.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none", display: "flex", gap: 12, alignItems: "center", padding: "14px 16px" }}>
+                          <div style={{ width: 44, height: 44, borderRadius: 10, background: COLORS.ink, color: "#F6F1E4", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Fraunces', serif", fontWeight: 700, fontSize: 12.5, flexShrink: 0 }}>
+                            {law.code}
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.ink }}>{law.title}</div>
+                            <div style={{ fontSize: 11.5, color: COLORS.charcoal, opacity: 0.7, marginTop: 2 }}>{law.note}</div>
+                          </div>
+                          <div style={{ color: COLORS.bordo, fontSize: 16 }}>→</div>
+                        </a>
+                        <button onClick={() => { setExpandedLaw(open ? null : law.code); setNoteDraft({ madde: "", text: "" }); }} style={{ width: "100%", textAlign: "left", padding: "8px 16px", borderTop: `1px solid ${COLORS.line}`, background: "transparent", fontSize: 11.5, color: COLORS.bordo, fontWeight: 600 }}>
+                          {open ? "▲ Notları gizle" : `▾ Notlarım (${notes.length})`}
+                        </button>
+                        {open && (
+                          <div style={{ padding: "0 16px 14px", borderTop: `1px solid ${COLORS.line}`, background: "#FAF7F0" }}>
+                            {notes.length > 0 && (
+                              <div style={{ display: "flex", flexDirection: "column", gap: 6, margin: "10px 0" }}>
+                                {notes.map((n) => (
+                                  <div key={n.id} style={{ background: "#fff", borderRadius: 6, padding: "9px 11px", border: `1px solid ${COLORS.line}` }}>
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                                      <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.bordo }}>{n.madde || "Not"}</div>
+                                      <button onClick={() => deleteLawNote(law.code, n.id)} style={{ background: "none", border: "none", fontSize: 10.5, color: COLORS.bordo, opacity: 0.5 }}>sil</button>
+                                    </div>
+                                    <div style={{ fontSize: 12.5, color: COLORS.charcoal, marginTop: 3, lineHeight: 1.4 }}>{n.text}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <input placeholder="Madde no (örn. m. 683)" value={noteDraft.madde} onChange={(e) => setNoteDraft({ ...noteDraft, madde: e.target.value })} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: `1px solid ${COLORS.line}`, marginTop: 8, marginBottom: 6, fontSize: 12.5 }} />
+                            <textarea placeholder="Maddeyle ilgili ders / sınav notunu ekle..." value={noteDraft.text} onChange={(e) => setNoteDraft({ ...noteDraft, text: e.target.value })} style={{ width: "100%", padding: "8px 10px", borderRadius: 6, border: `1px solid ${COLORS.line}`, marginBottom: 6, fontSize: 12.5, minHeight: 44, resize: "vertical" }} />
+                            <button onClick={() => addLawNote(law.code)} style={{ width: "100%", padding: "9px 0", borderRadius: 6, border: "none", background: COLORS.ink, color: "#fff", fontWeight: 600, fontSize: 12.5 }}>Notu Kaydet</button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ---- CARDS TAB ---- */}
+            {tab === "cards" && (
+              <div>
+                <div className="section-title">BİLGİ FİŞLERİ</div>
+                <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 10, marginBottom: 6 }}>
+                  {["Tümü", ...topics].map((t) => (
+                    <button key={t} onClick={() => setSelectedTopic(t)} style={{
+                      flexShrink: 0, padding: "6px 14px", borderRadius: 999, fontSize: 12.5, fontWeight: 500,
+                      border: `1px solid ${selectedTopic === t ? COLORS.bordo : COLORS.line}`,
+                      background: selectedTopic === t ? COLORS.bordo : "transparent",
+                      color: selectedTopic === t ? "#fff" : COLORS.charcoal,
+                    }}>{t}</button>
+                  ))}
+                </div>
+
+                {queue.length === 0 ? (
+                  <div style={{ textAlign: "center", padding: "60px 20px", color: COLORS.bordo, opacity: 0.8 }}>
+                    <div style={{ fontFamily: "'Fraunces', serif", fontSize: 18, marginBottom: 6 }}>Bu konuda henüz fiş yok</div>
+                    <div style={{ fontSize: 13 }}>'Konular' sekmesinden yeni fiş ekleyebilirsiniz.</div>
+                  </div>
+                ) : (
+                  <>
+                    <div style={{ fontSize: 11.5, color: COLORS.bordo, textAlign: "right", marginBottom: 8, fontWeight: 500 }}>
+                      MADDE {String((cursor % queue.length) + 1).padStart(2, "0")} / {String(queue.length).padStart(2, "0")}
+                    </div>
+                    <div onClick={() => setFlipped((f) => !f)} style={{ perspective: 1200, height: 260, cursor: "pointer" }}>
+                      <div className={`fiş-inner${flipped ? " flipped" : ""}`}>
+                        <div className="fiş-front" style={{ background: "#fff", border: `1px solid ${COLORS.line}`, borderRadius: 18, boxShadow: "0 4px 14px rgba(28,43,74,0.06)" }}>
+                          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 6, background: COLORS.gold, borderRadius: "18px 0 0 18px" }} />
+                          <div style={{ fontSize: 10.5, color: COLORS.bordo, fontWeight: 600, letterSpacing: 0.5, marginBottom: 10 }}>{current.topic.toUpperCase()}</div>
+                          <div style={{ fontFamily: "'Fraunces', serif", fontSize: 18, fontWeight: 600, color: COLORS.ink, lineHeight: 1.4 }}>{current.front}</div>
+                          <div style={{ position: "absolute", bottom: 14, right: 18, fontSize: 11, color: COLORS.bordo, opacity: 0.6 }}>çevirmek için dokun ↻</div>
+                        </div>
+                        <div className="fiş-back" style={{ background: COLORS.ink, borderRadius: 18, boxShadow: "0 4px 14px rgba(28,43,74,0.18)" }}>
+                          <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: 6, background: COLORS.gold, borderRadius: "18px 0 0 18px" }} />
+                          <div style={{ fontSize: 10.5, color: COLORS.gold, fontWeight: 600, letterSpacing: 0.5, marginBottom: 10 }}>YANIT &amp; AÇIKLAMA</div>
+                          <div style={{ fontSize: 14.5, color: "#F6F1E4", lineHeight: 1.5 }}>{current.back}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {flipped && (
+                      <div style={{ display: "flex", gap: 8, marginTop: 18 }}>
+                        <button onClick={() => rate(-1)} style={{ flex: 1, padding: "13px 0", borderRadius: 10, border: "none", background: "#F3E3D9", color: COLORS.rust, fontWeight: 600, fontSize: 13 }}>Zorlandım</button>
+                        <button onClick={() => rate(0)} style={{ flex: 1, padding: "13px 0", borderRadius: 10, border: "none", background: "#EEE7D3", color: COLORS.bordo, fontWeight: 600, fontSize: 13 }}>Kısmen</button>
+                        <button onClick={() => rate(1)} style={{ flex: 1, padding: "13px 0", borderRadius: 10, border: "none", background: COLORS.green, color: "#fff", fontWeight: 600, fontSize: 13 }}>Biliyorum</button>
+                      </div>
+                    )}
+
+                    {!flipped && (
+                      <div style={{ textAlign: "center", marginTop: 18, fontSize: 12.5, color: COLORS.bordo, opacity: 0.7 }}>
+                        Bugün toplam {todayReviewedCount} fiş gözden geçirildi
+                      </div>
+                    )}
+
+                    <button onClick={() => deleteCard(current.id)} style={{ display: "block", margin: "20px auto 0", background: "none", border: "none", fontSize: 12, color: COLORS.bordo, opacity: 0.55 }}>
+                      Bu fişi sil
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* ---- PRATİK / OLAY ÇÖZME TAB ---- */}
+            {tab === "pratik" && (
+              <div>
+                <div className="section-title">BUGÜNÜN PRATİĞİ</div>
+                <div style={{ fontSize: 12, color: COLORS.bordo, opacity: 0.8, marginBottom: 14 }}>
+                  Sınavlara hazırlık için pratik olay metinleri ve adım adım hukuki çözümler.
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {cases.map((c) => {
+                    const isOpen = openCaseId === c.id;
+                    return (
+                      <div key={c.id} className="app-card">
+                        <div style={{ fontSize: 10.5, fontWeight: 700, color: COLORS.bordo, letterSpacing: 0.5, marginBottom: 4 }}>
+                          {c.course.toUpperCase()}
+                        </div>
+                        <div style={{ fontFamily: "'Fraunces', serif", fontSize: 16, fontWeight: 600, color: COLORS.ink, marginBottom: 8 }}>
+                          {c.title}
+                        </div>
+                        <div style={{ fontSize: 13, color: COLORS.charcoal, lineHeight: 1.45, marginBottom: 10, background: COLORS.parchment, padding: 10, borderRadius: 8 }}>
+                          <strong>Olay:</strong> {c.factPattern}
+                        </div>
+                        <div style={{ fontSize: 12.5, fontWeight: 600, color: COLORS.rust, marginBottom: 10 }}>
+                          ❓ Hukuki Sorun: {c.legalIssue}
+                        </div>
+
+                        {isOpen ? (
+                          <div style={{ borderTop: `1px solid ${COLORS.line}`, paddingTop: 10, marginTop: 10 }}>
+                            <div style={{ fontSize: 11.5, fontWeight: 700, color: COLORS.green, marginBottom: 4 }}>
+                              İlgili Mevzuat: {c.statute}
+                            </div>
+                            <div style={{ fontSize: 13, color: COLORS.ink, lineHeight: 1.5 }}>
+                              <strong>Çözüm &amp; Gerekçe:</strong> {c.solution}
+                            </div>
+                            <button onClick={() => setOpenCaseId(null)} style={{ background: "none", border: "none", color: COLORS.bordo, fontSize: 12, fontWeight: 600, marginTop: 10, padding: 0 }}>
+                              ▲ Çözümü Gizle
+                            </button>
+                          </div>
+                        ) : (
+                          <button onClick={() => setOpenCaseId(c.id)} style={{ width: "100%", padding: "9px 0", borderRadius: 8, border: `1px solid ${COLORS.line}`, background: COLORS.parchment, color: COLORS.ink, fontWeight: 600, fontSize: 12.5 }}>
+                            ▼ Çözümü ve Gerekçeyi Gör
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* ---- TOPICS TAB ---- */}
+            {tab === "topics" && (
+              <div>
+                <div className="section-title">KONULARIM &amp; İLERLEME</div>
+                {topicStats.length === 0 && <div style={{ fontSize: 13, color: COLORS.bordo, opacity: 0.7, marginBottom: 20 }}>Henüz konu yok. Aşağıdan ilk fişini ekleyebilirsin.</div>}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 22 }}>
+                  {topicStats.map((t) => (
+                    <div key={t.topic} className="app-card">
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
+                        <div style={{ fontWeight: 600, fontSize: 14, color: COLORS.ink }}>{t.topic}</div>
+                        <div style={{ fontSize: 12, color: COLORS.bordo }}>{t.count} fiş</div>
+                      </div>
+                      <div style={{ height: 6, background: "#EEE7D3", borderRadius: 999, overflow: "hidden" }}>
+                        <div style={{ height: "100%", width: `${t.mastery}%`, background: t.mastery > 66 ? COLORS.green : t.mastery > 33 ? COLORS.gold : COLORS.rust, borderRadius: 999 }} />
+                      </div>
+                      <div style={{ fontSize: 11, color: COLORS.charcoal, opacity: 0.6, marginTop: 6 }}>
+                        Hakimiyet %{t.mastery}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {!showAddForm ? (
+                  <button onClick={() => setShowAddForm(true)} style={{ width: "100%", padding: "13px 0", borderRadius: 12, border: `1px dashed ${COLORS.bordo}`, background: "transparent", color: COLORS.bordo, fontWeight: 600, fontSize: 13.5 }}>
+                    + Yeni fiş ekle
+                  </button>
+                ) : (
+                  <div className="app-card">
+                    <div style={{ fontWeight: 600, fontSize: 13.5, color: COLORS.ink, marginBottom: 10 }}>Yeni Fiş</div>
+                    <input placeholder="Konu / Ders (örn. Eşya Hukuku)" value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })} style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: `1px solid ${COLORS.line}`, marginBottom: 8, fontSize: 13.5 }} />
+                    <textarea placeholder="Ön yüz — Soru veya terim" value={form.front} onChange={(e) => setForm({ ...form, front: e.target.value })} style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: `1px solid ${COLORS.line}`, marginBottom: 8, fontSize: 13.5, minHeight: 60, resize: "vertical" }} />
+                    <textarea placeholder="Arka yüz — Yanıt veya açıklama" value={form.back} onChange={(e) => setForm({ ...form, back: e.target.value })} style={{ width: "100%", padding: "10px 12px", borderRadius: 6, border: `1px solid ${COLORS.line}`, marginBottom: 12, fontSize: 13.5, minHeight: 70, resize: "vertical" }} />
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <button onClick={addCard} style={{ flex: 1, padding: "11px 0", borderRadius: 6, border: "none", background: COLORS.ink, color: "#fff", fontWeight: 600, fontSize: 13.5 }}>Kaydet</button>
+                      <button onClick={() => setShowAddForm(false)} style={{ flex: 1, padding: "11px 0", borderRadius: 6, border: `1px solid ${COLORS.line}`, background: "transparent", color: COLORS.charcoal, fontSize: 13.5 }}>Kapat</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+          </div>
+
+          {/* Bottom Navigation */}
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "#fff", borderTop: `1px solid ${COLORS.line}`, display: "flex", padding: "10px 0 calc(10px + env(safe-area-inset-bottom))", zIndex: 100 }}>
+            {[
+              ["dersler", "Dersler"],
+              ["kanunlar", "Kanunlar"],
+              ["cards", "Kartlar"],
+              ["pratik", "Pratik"],
+              ["topics", "Konular"],
+            ].map(([key, label]) => (
+              <button key={key} onClick={() => { setTab(key); if (key !== "dersler") setSelectedCourse(null); }} style={{ flex: 1, background: "none", border: "none", fontSize: 11.5, fontWeight: 600, color: tab === key ? COLORS.bordo : "#9A9382", padding: "4px 0" }}>
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<HukukFisleri />);
+  </script>
+</body>
+</html>
